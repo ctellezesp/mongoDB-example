@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-//const Dog = require('../models/dogs.js');
+const Dog = require('../models/dogs.js');
 
 //Creates model for Route
-const dogSchema = new mongoose.Schema({
+/*const dogSchema = new mongoose.Schema({
 	//_id: mongoose.Schema.Types.ObjectId,
 	name: {
 		type: String,
@@ -15,7 +15,7 @@ const dogSchema = new mongoose.Schema({
 		default: 0
 	}
 })
-const Dog = mongoose.model('dogs', dogSchema);
+const Dog = mongoose.model('dogs', dogSchema);*/
 
 // Endpoints
 // Index get /Dogs
