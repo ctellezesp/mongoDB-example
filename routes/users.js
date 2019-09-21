@@ -22,4 +22,39 @@ router.post('/', (req, res, next) => {
 	.catch(next);
 });
 
+router.post('/login', (req, res, next) => {
+	const body = req.body;
+	if(!body.username || !body.password) return next({
+		message: "Username or password are missing",
+		name: "Invalid"
+	});
+
+	User.findOne({username: body.username})
+	.then(result => {
+		if(result) {
+			//comparar contraseña
+			result.comparePass(body.password, function(err, isMatch) {
+				if(err) throw(err);
+				if(isMatch) {
+					res.status(200).json({
+						message: "Successfully logged in",
+						user: result //TODO: access token JWT
+					})
+				} else {
+					res.status(401).json({
+						message: "Username or password are incorrect",
+						name: "Forbidden"
+					});
+				}
+			})
+		} else {
+			next({
+				message: "Username or password are incorrect",
+				name: "Forbidden"
+			})
+		}
+	})
+	.catch(next);
+})
+
 module.exports = router;
