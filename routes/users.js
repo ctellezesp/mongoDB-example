@@ -2,6 +2,30 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const User = require('../models/users');
+const jwt = require('jsonwebtoken');
+
+router.get('/', verifyToken ,function(req,res,next) {
+	jwt.verify(
+		req.token,
+		'secretKey',
+		(err, authData) => {
+			if(err) next(err);
+			User.find({})
+			.then(result => {
+				if(result.length) {
+					res.status(200).json({result, authData});
+				}
+			})
+		}
+	)
+	User.find({})
+	.then(result => {
+		if(result.length) {
+			res.status(200).json({result});
+		}
+	})
+	.catch(next);
+});
 
 router.post('/', (req, res, next) => {
 	const body = req.body;
@@ -9,8 +33,8 @@ router.post('/', (req, res, next) => {
 	.then(result => {
 		if(result) {
 			res.status(201).json({
-			message: "sign up completed",
-			user: result
+				message: "sign up completed",
+				user: result
 			})
 		} else {
 			next({
@@ -36,15 +60,19 @@ router.post('/login', (req, res, next) => {
 			result.comparePass(body.password, function(err, isMatch) {
 				if(err) throw(err);
 				if(isMatch) {
-					res.status(200).json({
-						message: "Successfully logged in",
-						user: result //TODO: access token JWT
-					})
-				} else {
-					res.status(401).json({
-						message: "Username or password are incorrect",
-						name: "Forbidden"
-					});
+					jwt.sign(
+						{result}, //auth data
+						'secretKey', //secret
+						{expiresIn: '120s'},
+						(err, accessToken) => {
+							if(err) next({
+								message: "Invalid operation",
+								name: "Forbidden"
+							});
+
+							res.status(200).json({accessToken});
+						}
+					);
 				}
 			})
 		} else {
@@ -55,6 +83,26 @@ router.post('/login', (req, res, next) => {
 		}
 	})
 	.catch(next);
-})
+});
+
+function verifyToken(req, res, next) {
+	//token es correcto y valido
+	//if true next()
+	//if false next(err)
+	const bearerHeader = req.headers['authorization'];
+	let token = bearerHeader.split(' ');
+	if(token && token[1]) {
+		//si llego token
+		req.token = token[1];
+		next();
+	} else {
+		next({
+			message: "Invalid token",
+			name: "Forbidden"
+		});
+	}
+}
+
+
 
 module.exports = router;
